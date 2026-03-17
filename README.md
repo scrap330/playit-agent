@@ -55,7 +55,7 @@ docker run --rm -it --net=host -e SECRET_KEY=<secret key> ghcr.io/playit-cloud/p
 ```
 
 > [!NOTE]
-> Secret key can be generated [here](https://playit.gg/account/agents/new-docker).
+> Secret key can be generated [here](https://playit.gg/account/setup/wizard/new-account/docker/docker-name).
 
 ## Building / Running Locally
 
