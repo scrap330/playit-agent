@@ -1,0 +1,60 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (ex: v0.15.26) - laissez vide pour utiliser le dernier commit'
+        required: false
+        default: ''
+
+jobs:
+  build_macos:
+    name: macOS - ${{ matrix.platform.name }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: Apple Silicon (ARM M1/M2/M3)
+            arch: aarch64-apple-darwin
+            artifact: playit-darwin-arm
+
+          - name: Intel (x86_64)
+            arch: x86_64-apple-darwin
+            artifact: playit-darwin-intel
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.arch }}
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.platform.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.platform.arch }}-cargo-
+
+      - name: Build release binary
+        run: cargo build --target ${{ matrix.platform.arch }} --release --package playit-cli
+
+      - name: Rename binary
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.platform.arch }}/release/playit-cli dist/${{ matrix.platform.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform.artifact }}
+          path: dist/${{ matrix.platform.artifact }}
+          retention-days: 30
